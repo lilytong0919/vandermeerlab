@@ -188,6 +188,12 @@ if numel(unique(sample_count_tvec)) > 1
    error('tvec sizes unequal.');
 end
 
+if length(unique(tvec)) ~= length(tvec)
+   warning('Duplicate timestamps in tvec, removing...');
+   [~, keep_idx] = unique(csc_tsd.tvec);
+   csc_tsd.tvec = csc_tsd.tvec(keep_idx);
+   csc_tsd.data = csc_tsd.data(:, keep_idx);
+end
 
 % check if ExpKeys available
 keys_f = FindFiles('*keys.m');
