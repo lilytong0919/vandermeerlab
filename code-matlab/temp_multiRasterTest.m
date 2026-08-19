@@ -141,7 +141,40 @@ CSC2 = LoadCSC(please);
 
 % create cfg for MultiRaster
 cfg.lfp(1) = CSC;
-cfg.lfp(2) = CSC;
+cfg.lfp(2) = CSC2;
+
+S = ts;
+S.t{1}(1,1) = CSC.tvec(1); % make a fake S because MultiRaster requires this as an input in order to work
+S.t{1}(2,1) = CSC.tvec(end);
+S.label = {'fakeS'};
+
+% other configs
+cfg.SpikeHeight = 0.4;
+cfg.axisflag = 'tight';
+cfg.spkColor = 'k';
+cfg.ivColor = 'r';
+% cfg.lfpColor = {'k','k'};
+cfg.lfpHeight = 15;
+cfg.lfpMax = 15;
+cfg.axislabel = 'on';
+cfg.windowSize = 1;
+
+% Run multiRaster
+h = MultiRaster(cfg,S);
+
+%% Two LFP traces in same struct
+% test multiRaster with single CSC multiple LFP
+cd F:\Data\MvdMlab_testdata\M433_2023_09_19_recording1
+% Load CSC
+LoadExpKeys
+please = [];
+cfg = [];
+please.fc = ExpKeys.goodSWR;
+please.resample = 2000;
+CSC = LoadCSC(please);
+
+% create cfg for MultiRaster
+cfg.lfp = CSC;
 
 S = ts;
 S.t{1}(1,1) = CSC.tvec(1); % make a fake S because MultiRaster requires this as an input in order to work
