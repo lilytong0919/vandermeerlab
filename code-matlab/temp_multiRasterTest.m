@@ -1,16 +1,16 @@
-% test multiRaster with single CSC multiple LFP
-cd F:\Data\MvdMlab_testdata\M433_2023_09_19_recording1
-% Load CSC
-LoadExpKeys
-
-please = [];
-please.fc = ExpKeys.goodSWR;
-please.resample = 2000;
-CSC = LoadCSC(please);
-
-% create cfg for MultiRaster
-cfg.lfp = CSC;
-
+% % test multiRaster with single CSC multiple LFP
+% cd F:\Data\MvdMlab_testdata\M433_2023_09_19_recording1
+% % Load CSC
+% LoadExpKeys
+% 
+% please = [];
+% please.fc = ExpKeys.goodSWR;
+% please.resample = 2000;
+% CSC = LoadCSC(please);
+% 
+% % create cfg for MultiRaster
+% cfg.lfp = CSC;
+% 
 
 %% Single LFP trace
 

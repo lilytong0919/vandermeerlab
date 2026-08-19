@@ -261,10 +261,10 @@ switch plotMode
         numLFP = length(cfg.lfp);  
         
         % if numLFP > 1
-        if isfield(cfg, 'lfpColor')
-            cmap = cfg.lfpColor; 
+        if numLFP == 1
+            cmap = repelem({cfg.lfpColor},numLFP); 
         else
-            cmap = linspecer(numLFP);
+            cmap = num2cell(linspecer(numLFP),2);
         end % The behavior regarding lfp traces color control is a little strange too.
         % Currently the function requires user setting of lfpColor when
         % only a single trace is provided, while 
@@ -280,8 +280,8 @@ switch plotMode
             upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
             
             lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-            %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
-            h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
+            %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
+            h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
         end
         % else
         %     lfp = cfg.lfp;
@@ -305,10 +305,10 @@ switch plotMode
         numLFP = length(cfg.lfp);  
         
         % if numLFP > 1
-        if isfield(cfg, 'lfpColor')
-            cmap = cfg.lfpColor;
+        if numLFP == 1
+            cmap = repelem({cfg.lfpColor},numLFP); 
         else
-            cmap = linspecer(numLFP);
+            cmap = num2cell(linspecer(numLFP),2);
         end
         
         for iLFP = 1:numLFP
@@ -322,8 +322,8 @@ switch plotMode
             upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
             
             lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-            %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
-            h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
+            %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
+            h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
         end
         % else
         %     lfp = cfg.lfp;
@@ -352,10 +352,10 @@ switch plotMode
         numLFP = length(cfg.lfp);  
         
         % if numLFP > 1
-        if isfield(cfg, 'lfpColor')
-            cmap = cfg.lfpColor;
+        if numLFP == 1
+            cmap = repelem({cfg.lfpColor},numLFP); 
         else
-            cmap = linspecer(numLFP);
+            cmap = num2cell(linspecer(numLFP),2);
         end
         
         for iLFP = 1:numLFP
