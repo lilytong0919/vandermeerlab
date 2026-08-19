@@ -106,7 +106,7 @@ cfg_def.axisflag = 'spandex';
 cfg_def.spkColor = 'k';
 cfg_def.LineWidth = 1;
 cfg_def.ivColor = 'r';
-%cfg_def.lfpColor = 'k'; 
+cfg_def.lfpColor = 'k'; 
 cfg_def.lfpHeight = 15;
 cfg_def.lfpSpacing = 15;
 cfg_def.lfpWidth = 1;
@@ -260,29 +260,17 @@ switch plotMode
     case 5 % lfp data only
         numLFP = length(cfg.lfp);  
         
-        if numLFP > 1
-            if isfield(cfg, 'lfpColor')
-                cmap = cfg.lfpColor;
-            else
-                cmap = linspecer(numLFP);
-            end
-
-            for iLFP = 1:numLFP
-                lfp = cfg.lfp(iLFP);
-                
-                abslfp = abs(lfp.data);
-                nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-                lfp.data(nans_here) = NaN;
-                
-                lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-                upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-                
-                lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-                %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
-                h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
-            end
+        % if numLFP > 1
+        if isfield(cfg, 'lfpColor')
+            cmap = cfg.lfpColor; 
         else
-            lfp = cfg.lfp;
+            cmap = linspecer(numLFP);
+        end % The behavior regarding lfp traces color control is a little strange too.
+        % Currently the function requires user setting of lfpColor when
+        % only a single trace is provided, while 
+
+        for iLFP = 1:numLFP
+            lfp = cfg.lfp(iLFP);
             
             abslfp = abs(lfp.data);
             nans_here = abslfp > cfg.lfpMax*mean(abslfp);
@@ -292,9 +280,23 @@ switch plotMode
             upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
             
             lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-            %h.LFP = plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
-            h.LFP = reduce_plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
+            %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
+            h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
         end
+        % else
+        %     lfp = cfg.lfp;
+        % 
+        %     abslfp = abs(lfp.data);
+        %     nans_here = abslfp > cfg.lfpMax*mean(abslfp);
+        %     lfp.data(nans_here) = NaN;
+        % 
+        %     lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
+        %     upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
+        % 
+        %     lfp.data = rescaleM(lfp.data,lower_val,upper_val);
+        %     %h.LFP = plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
+        %     h.LFP = reduce_plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
+        % end
         ylims = get(gca,'YLim'); ylims(1) = lower_val;
 
     case 6 % lfp + ts data
@@ -302,29 +304,15 @@ switch plotMode
 
         numLFP = length(cfg.lfp);  
         
-        if numLFP > 1
-            if isfield(cfg, 'lfpColor')
-                cmap = cfg.lfpColor;
-            else
-                cmap = linspecer(numLFP);
-            end
-            
-            for iLFP = 1:numLFP
-                lfp = cfg.lfp(iLFP);
-                
-                abslfp = abs(lfp.data);
-                nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-                lfp.data(nans_here) = NaN;
-                
-                lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-                upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-                
-                lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-                %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
-                h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
-            end
+        % if numLFP > 1
+        if isfield(cfg, 'lfpColor')
+            cmap = cfg.lfpColor;
         else
-            lfp = cfg.lfp;
+            cmap = linspecer(numLFP);
+        end
+        
+        for iLFP = 1:numLFP
+            lfp = cfg.lfp(iLFP);
             
             abslfp = abs(lfp.data);
             nans_here = abslfp > cfg.lfpMax*mean(abslfp);
@@ -334,9 +322,23 @@ switch plotMode
             upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
             
             lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-            %h.LFP = plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
-            h.LFP = reduce_plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
+            %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
+            h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
         end
+        % else
+        %     lfp = cfg.lfp;
+        % 
+        %     abslfp = abs(lfp.data);
+        %     nans_here = abslfp > cfg.lfpMax*mean(abslfp);
+        %     lfp.data(nans_here) = NaN;
+        % 
+        %     lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
+        %     upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
+        % 
+        %     lfp.data = rescaleM(lfp.data,lower_val,upper_val);
+        %     %h.LFP = plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
+        %     h.LFP = reduce_plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
+        % end
         ylims = get(gca,'YLim'); ylims(1) = lower_val;
         PlotTSEvt([],cfg.evt)
 
@@ -349,39 +351,39 @@ switch plotMode
         
         numLFP = length(cfg.lfp);  
         
-        if numLFP > 1
-            if isfield(cfg, 'lfpColor')
-                cmap = cfg.lfpColor;
-            else
-                cmap = linspecer(numLFP);
-            end
-            
-            for iLFP = 1:numLFP
-                lfp = cfg.lfp(iLFP);
-                
-                abslfp = abs(lfp.data);
-                nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-                lfp.data(nans_here) = NaN;
-                
-                lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-            upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-                
-                lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-                h.LFP(iLFP) = PlotTSDfromIV(cfg_temp,cfg.evt,lfp);
-            end
+        % if numLFP > 1
+        if isfield(cfg, 'lfpColor')
+            cmap = cfg.lfpColor;
         else
-            lfp = cfg.lfp;
+            cmap = linspecer(numLFP);
+        end
+        
+        for iLFP = 1:numLFP
+            lfp = cfg.lfp(iLFP);
             
             abslfp = abs(lfp.data);
             nans_here = abslfp > cfg.lfpMax*mean(abslfp);
             lfp.data(nans_here) = NaN;
             
             lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-            upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
+        upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
             
             lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-            h = PlotTSDfromIV(cfg_temp,cfg.evt,lfp);
+            h.LFP(iLFP) = PlotTSDfromIV(cfg_temp,cfg.evt,lfp);
         end
+        % else
+        %     lfp = cfg.lfp;
+        % 
+        %     abslfp = abs(lfp.data);
+        %     nans_here = abslfp > cfg.lfpMax*mean(abslfp);
+        %     lfp.data(nans_here) = NaN;
+        % 
+        %     lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
+        %     upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
+        % 
+        %     lfp.data = rescaleM(lfp.data,lower_val,upper_val);
+        %     h = PlotTSDfromIV(cfg_temp,cfg.evt,lfp);
+        % end
         ylims = get(gca,'YLim'); ylims(1) = lower_val;
     
     case 8 % lfp + iv + ts data
@@ -446,6 +448,10 @@ plotmodes = {'spikes only','ts events','iv events','ts + iv events','lfp','lfp +
 h.plotMode = plotmodes{plotMode};
 % out.plot = h;
 if exist('hS','var'); h.S = hS; end
+end
+
+function lfps_out = lfpDataPrep(lfps)
+
 end
 
 function data_out = rescaleM(data_in, lower_val, upper_val)
