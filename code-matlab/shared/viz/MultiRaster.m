@@ -144,6 +144,8 @@ else
            error('Input tsd is not correctly formed.')
        end
     end
+    % TODO: add flattenLFP to break up tsd with multiple rows of data
+    [cfg.lfp,boundaries] = flattenLFPs(cfg.lfp);
     time = cfg.lfp(1).tvec(1):binSize:cfg.lfp(1).tvec(end);
 end
 
@@ -378,6 +380,23 @@ plotmodes = {'spikes only','ts events','iv events','ts + iv events','lfp','lfp +
 h.plotMode = plotmodes{plotMode};
 % out.plot = h;
 if exist('hS','var'); h.S = hS; end
+end
+
+function [lfps, time_support] = flattenLFPs(lfps)
+ntsd = length(lfps);
+flat_lfps = [];
+counter = 1;
+time_support = [lfps.tvec(1),lfps.tvec(end)];
+for i = 1:ntsd
+    % loop through all channels and extract data
+    [ntraces,~] = size(lfps.data);
+    % check if we have labels matching the lenght of data, if not we make
+    % fake labels
+    
+    for l = lfps.label
+        flat_lfps(counter) = TSD_SelectChannel(lfps,l);
+    end
+end
 end
 
 function [lfp,lower,upper] = prepLFP(cfg,iLFP)
