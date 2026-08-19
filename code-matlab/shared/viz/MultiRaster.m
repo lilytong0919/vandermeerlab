@@ -265,29 +265,14 @@ switch plotMode
             cmap = repelem({cfg.lfpColor},numLFP); 
         else
             cmap = num2cell(linspecer(numLFP),2);
-        end % The behavior regarding lfp traces color control is a little strange too.
-        % Currently the function requires user setting of lfpColor when
-        % only a single trace is provided, while 
-
+        end
+        %TODO: this behavior is still sub-optimal, best is to create a
+        %colorParser function to deal with colors. But this is low
+        %priority. I'll do it when I'm more free. -Lily Aug 2026
         for iLFP = 1:numLFP
             [lfp, lower_val, upper_val] = prepLFP(cfg,iLFP);
-            %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
             h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
         end
-        % else
-        %     lfp = cfg.lfp;
-        % 
-        %     abslfp = abs(lfp.data);
-        %     nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-        %     lfp.data(nans_here) = NaN;
-        % 
-        %     lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-        %     upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-        % 
-        %     lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-        %     %h.LFP = plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
-        %     h.LFP = reduce_plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
-        % end
         ylims = get(gca,'YLim'); ylims(1) = lower_val;
 
     case 6 % lfp + ts data
@@ -304,32 +289,8 @@ switch plotMode
         
         for iLFP = 1:numLFP
             [lfp,lower_val,upper_val] = prepLFP(cfg,iLFP);
-            
-            % abslfp = abs(lfp.data);
-            % nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-            % lfp.data(nans_here) = NaN;
-            % 
-            % lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-            % upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-            % 
-            % lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-            % %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
             h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
         end
-        % else
-        %     lfp = cfg.lfp;
-        % 
-        %     abslfp = abs(lfp.data);
-        %     nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-        %     lfp.data(nans_here) = NaN;
-        % 
-        %     lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-        %     upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-        % 
-        %     lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-        %     %h.LFP = plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
-        %     h.LFP = reduce_plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
-        % end
         ylims = get(gca,'YLim'); ylims(1) = lower_val;
         PlotTSEvt([],cfg.evt)
 
@@ -351,30 +312,8 @@ switch plotMode
         
         for iLFP = 1:numLFP
             [lfp, lower_val, upper_val] = prepLFP(cfg,iLFP);
-            
-        %     abslfp = abs(lfp.data);
-        %     nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-        %     lfp.data(nans_here) = NaN;
-        % 
-        %     lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-        % upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-        % 
-        %     lfp.data = rescaleM(lfp.data,lower_val,upper_val);
             h.LFP(iLFP) = PlotTSDfromIV(cfg_temp,cfg.evt,lfp);
         end
-        % else
-        %     lfp = cfg.lfp;
-        % 
-        %     abslfp = abs(lfp.data);
-        %     nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-        %     lfp.data(nans_here) = NaN;
-        % 
-        %     lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-        %     upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-        % 
-        %     lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-        %     h = PlotTSDfromIV(cfg_temp,cfg.evt,lfp);
-        % end
         ylims = get(gca,'YLim'); ylims(1) = lower_val;
     
     case 8 % lfp + iv + ts data
