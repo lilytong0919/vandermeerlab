@@ -84,6 +84,9 @@ function h = MultiRaster(cfg_in,S)
 % aacarey edit Sept 2015, +cfg.openNewFig, removed cfg.openInAxes, added
 %      cfg.axisflag option
 % youkitan 2016-08-18 multiple lfp fix and ts event fix
+% lily 2026-08-19 add support for multiple lfp traces with 1 tsd object.
+% numLFP determined by number of traces in each object and number of tsd
+% object.
 
 %% HELP
 

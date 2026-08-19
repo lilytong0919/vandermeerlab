@@ -10,6 +10,7 @@ function tsd_out = TSD_SelectChannel(tsd_in,channel_label,options)
 % returns tsd containing only channels with labels in channel_label
 %
 % MvdM 2015-11-03 initial version
+% Lily 2026-08-19 added optional input iloc
 
 % argument block
 arguments
