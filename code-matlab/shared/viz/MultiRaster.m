@@ -270,16 +270,7 @@ switch plotMode
         % only a single trace is provided, while 
 
         for iLFP = 1:numLFP
-            lfp = cfg.lfp(iLFP);
-            
-            abslfp = abs(lfp.data);
-            nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-            lfp.data(nans_here) = NaN;
-            
-            lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-            upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-            
-            lfp.data = rescaleM(lfp.data,lower_val,upper_val);
+            [lfp, lower_val, upper_val] = prepLFP(cfg,iLFP);
             %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
             h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
         end
@@ -312,17 +303,17 @@ switch plotMode
         end
         
         for iLFP = 1:numLFP
-            lfp = cfg.lfp(iLFP);
+            [lfp,lower_val,upper_val] = prepLFP(cfg,iLFP);
             
-            abslfp = abs(lfp.data);
-            nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-            lfp.data(nans_here) = NaN;
-            
-            lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-            upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-            
-            lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-            %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
+            % abslfp = abs(lfp.data);
+            % nans_here = abslfp > cfg.lfpMax*mean(abslfp);
+            % lfp.data(nans_here) = NaN;
+            % 
+            % lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
+            % upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
+            % 
+            % lfp.data = rescaleM(lfp.data,lower_val,upper_val);
+            % %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
             h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
         end
         % else
@@ -359,16 +350,16 @@ switch plotMode
         end
         
         for iLFP = 1:numLFP
-            lfp = cfg.lfp(iLFP);
+            [lfp, lower_val, upper_val] = prepLFP(cfg,iLFP);
             
-            abslfp = abs(lfp.data);
-            nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-            lfp.data(nans_here) = NaN;
-            
-            lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-        upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-            
-            lfp.data = rescaleM(lfp.data,lower_val,upper_val);
+        %     abslfp = abs(lfp.data);
+        %     nans_here = abslfp > cfg.lfpMax*mean(abslfp);
+        %     lfp.data(nans_here) = NaN;
+        % 
+        %     lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
+        % upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
+        % 
+        %     lfp.data = rescaleM(lfp.data,lower_val,upper_val);
             h.LFP(iLFP) = PlotTSDfromIV(cfg_temp,cfg.evt,lfp);
         end
         % else
@@ -450,8 +441,16 @@ h.plotMode = plotmodes{plotMode};
 if exist('hS','var'); h.S = hS; end
 end
 
-function lfps_out = lfpDataPrep(lfps)
+function [lfp,lower,upper] = prepLFP(cfg,iLFP)
+lfp = cfg.lfp(iLFP);
+abslfp = abs(lfp.data);
+nans_here = abslfp > cfg.lfpMax*mean(abslfp);
+lfp.data(nans_here) = NaN;
 
+lower = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
+upper = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
+
+lfp.data = rescaleM(lfp.data,lower,upper);
 end
 
 function data_out = rescaleM(data_in, lower_val, upper_val)
