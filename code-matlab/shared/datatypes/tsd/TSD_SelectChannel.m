@@ -1,4 +1,4 @@
-function tsd_out = TSD_SelectChannel(tsd_in,channel_label,options)
+function tsd_out = TSD_SelectChannel(tsd_in,channel_label)
 % function tsd_out = TSD_SelectChannel(tsd_in,channel_label)
 % Parameters:
 %     tsd_in: tsd object to be select from
@@ -16,18 +16,14 @@ function tsd_out = TSD_SelectChannel(tsd_in,channel_label,options)
 arguments
     tsd_in {CheckTSD}
     channel_label 
-
-    % Optional inputs
-    options.iloc {mustBeNumeric, mustBeInteger} = []
 end
 
-
-if ~isempty(options.iloc)
-    [ntraces,~] = size(tsd_in.data);
-    if any(options.iloc > ntraces) || any(options.iloc < 1)
+if isnumeric(channel_label) && all(mod(channel_label, 1) == 0, 'all')
+    ntraces = size(tsd_in.data,1);
+    if any(channel_label > ntraces) || any(channel_label < 1)
         error("Index out of bounds. Index must be positive and not exceed %d.",ntraces)
     end
-    keep_idx = options.iloc;
+    keep_idx = channel_label;
 elseif ~iscell(channel_label)
    keep_idx = strmatch(channel_label, tsd_in.label, 'exact');
 else

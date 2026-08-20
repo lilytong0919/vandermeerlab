@@ -397,7 +397,7 @@ for i = 1:ntsd
     % loop through all channels and extract data
     ntraces = size(lfps(i).data, 1);
     for trace = 1:ntraces
-        lfp = TSD_SelectChannel(lfps(i), {}, "iloc",trace);
+        lfp = TSD_SelectChannel(lfps(i), trace);
         time_support(1) = min(time_support(1), lfp.tvec(1));
         time_support(2) = max(time_support(2), lfp.tvec(end));
         flat_lfps(counter) = lfp; % can't really pre-allocate here, I will live with bad coding
