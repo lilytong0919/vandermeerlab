@@ -386,16 +386,20 @@ if exist('hS','var'); h.S = hS; end
 end
 
 function [flat_lfps, time_support] = flattenLFPs(lfps)
+% Flatten 'nested' lfps, if lfps(i) has size(lfps(i).data,1)>1 then expand
+% that into n number of tsd with size(lfp.data,1), where
+% n=size(lfps(i).data,1).
+
 ntsd = length(lfps);
 counter = 1;
 time_support = [lfps(1).tvec(1),lfps(1).tvec(end)];
 for i = 1:ntsd
     % loop through all channels and extract data
-    [ntraces,~] = size(lfps(i).data);
+    ntraces = size(lfps(i).data,1);
     for trace = 1:ntraces
-        lfp = TSD_SelectChannel(lfps(i),{},"iloc",trace);
-        time_support(1) = min(time_support(1),lfp.tvec(1));
-        time_support(2) = max(time_support(2),lfp.tvec(end));
+        lfp = TSD_SelectChannel(lfps(i), {}, "iloc",trace);
+        time_support(1) = min(time_support(1), lfp.tvec(1));
+        time_support(2) = max(time_support(2), lfp.tvec(end));
         flat_lfps(counter) = lfp; % can't really pre-allocate here, I will live with bad coding
         counter = counter+1;
     end
@@ -403,6 +407,8 @@ end
 end
 
 function [lfp,lower,upper] = prepLFP(cfg,iLFP)
+% prepare lfp data for plotting, steps include: remove extreme values,
+% rescale data between display range defined by lfp height and lfp spacing.
 lfp = cfg.lfp(iLFP);
 abslfp = abs(lfp.data);
 nans_here = abslfp > cfg.lfpMax*mean(abslfp);

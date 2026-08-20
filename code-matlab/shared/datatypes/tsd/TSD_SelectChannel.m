@@ -24,17 +24,17 @@ end
 
 if ~isempty(options.iloc)
     [ntraces,~] = size(tsd_in.data);
-    if any(options.iloc>ntraces) || any(options.iloc<1)
-        error("Index out of bound. Index must be positive and not exceed %d.",ntraces)
+    if any(options.iloc > ntraces) || any(options.iloc < 1)
+        error("Index out of bounds. Index must be positive and not exceed %d.",ntraces)
     end
     keep_idx = options.iloc;
 elseif ~iscell(channel_label)
-   keep_idx = strmatch(channel_label,tsd_in.label,'exact');
+   keep_idx = strmatch(channel_label, tsd_in.label, 'exact');
 else
    keep_idx = [];
    for iCh = 1:length(channel_label)
        
-      keep_idx = cat(1,keep_idx,strmatch(channel_label{iCh},tsd_in.label,'exact'));
+      keep_idx = cat(1 ,keep_idx, strmatch(channel_label{iCh}, tsd_in.label, 'exact'));
        
    end
 end
