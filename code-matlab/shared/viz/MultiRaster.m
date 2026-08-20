@@ -84,6 +84,9 @@ function h = MultiRaster(cfg_in,S)
 % aacarey edit Sept 2015, +cfg.openNewFig, removed cfg.openInAxes, added
 %      cfg.axisflag option
 % youkitan 2016-08-18 multiple lfp fix and ts event fix
+% lily 2026-08-19 add support for multiple lfp traces with 1 tsd object.
+% numLFP determined by number of traces in each object and number of tsd
+% object.
 
 %% HELP
 
@@ -106,7 +109,7 @@ cfg_def.axisflag = 'spandex';
 cfg_def.spkColor = 'k';
 cfg_def.LineWidth = 1;
 cfg_def.ivColor = 'r';
-%cfg_def.lfpColor = 'k'; 
+cfg_def.lfpColor = 'k'; 
 cfg_def.lfpHeight = 15;
 cfg_def.lfpSpacing = 15;
 cfg_def.lfpWidth = 1;
@@ -144,7 +147,9 @@ else
            error('Input tsd is not correctly formed.')
        end
     end
-    time = cfg.lfp(1).tvec(1):binSize:cfg.lfp(1).tvec(end);
+    % TODO: add flattenLFP to break up tsd with multiple rows of data
+    [cfg.lfp,boundaries] = flattenLFPs(cfg.lfp);
+    time = boundaries(1):binSize:boundaries(end);
 end
 
 % Initialize events
@@ -260,40 +265,18 @@ switch plotMode
     case 5 % lfp data only
         numLFP = length(cfg.lfp);  
         
-        if numLFP > 1
-            if isfield(cfg, 'lfpColor')
-                cmap = cfg.lfpColor;
-            else
-                cmap = linspecer(numLFP);
-            end
-
-            for iLFP = 1:numLFP
-                lfp = cfg.lfp(iLFP);
-                
-                abslfp = abs(lfp.data);
-                nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-                lfp.data(nans_here) = NaN;
-                
-                lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-                upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-                
-                lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-                %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
-                h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
-            end
+        % if numLFP > 1
+        if numLFP == 1
+            cmap = repelem({cfg.lfpColor},numLFP); 
         else
-            lfp = cfg.lfp;
-            
-            abslfp = abs(lfp.data);
-            nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-            lfp.data(nans_here) = NaN;
-            
-            lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-            upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-            
-            lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-            %h.LFP = plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
-            h.LFP = reduce_plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
+            cmap = num2cell(linspecer(numLFP),2);
+        end
+        %TODO: this behavior is still sub-optimal, best is to create a
+        %colorParser function to deal with colors. But this is low
+        %priority. I'll do it when I'm more free. -Lily Aug 2026
+        for iLFP = 1:numLFP
+            [lfp, lower_val, upper_val] = prepLFP(cfg,iLFP);
+            h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
         end
         ylims = get(gca,'YLim'); ylims(1) = lower_val;
 
@@ -302,40 +285,16 @@ switch plotMode
 
         numLFP = length(cfg.lfp);  
         
-        if numLFP > 1
-            if isfield(cfg, 'lfpColor')
-                cmap = cfg.lfpColor;
-            else
-                cmap = linspecer(numLFP);
-            end
-            
-            for iLFP = 1:numLFP
-                lfp = cfg.lfp(iLFP);
-                
-                abslfp = abs(lfp.data);
-                nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-                lfp.data(nans_here) = NaN;
-                
-                lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-                upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-                
-                lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-                %h.LFP(iLFP) = plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
-                h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap(iLFP,:),'LineWidth',cfg.lfpWidth);
-            end
+        % if numLFP > 1
+        if numLFP == 1
+            cmap = repelem({cfg.lfpColor},numLFP); 
         else
-            lfp = cfg.lfp;
-            
-            abslfp = abs(lfp.data);
-            nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-            lfp.data(nans_here) = NaN;
-            
-            lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-            upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-            
-            lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-            %h.LFP = plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
-            h.LFP = reduce_plot(lfp.tvec,lfp.data,'Color',cfg.lfpColor,'LineWidth',cfg.lfpWidth);
+            cmap = num2cell(linspecer(numLFP),2);
+        end
+        
+        for iLFP = 1:numLFP
+            [lfp,lower_val,upper_val] = prepLFP(cfg,iLFP);
+            h.LFP(iLFP) = reduce_plot(lfp.tvec,lfp.data,'Color',cmap{iLFP},'LineWidth',cfg.lfpWidth);
         end
         ylims = get(gca,'YLim'); ylims(1) = lower_val;
         PlotTSEvt([],cfg.evt)
@@ -349,38 +308,16 @@ switch plotMode
         
         numLFP = length(cfg.lfp);  
         
-        if numLFP > 1
-            if isfield(cfg, 'lfpColor')
-                cmap = cfg.lfpColor;
-            else
-                cmap = linspecer(numLFP);
-            end
-            
-            for iLFP = 1:numLFP
-                lfp = cfg.lfp(iLFP);
-                
-                abslfp = abs(lfp.data);
-                nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-                lfp.data(nans_here) = NaN;
-                
-                lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-            upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-                
-                lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-                h.LFP(iLFP) = PlotTSDfromIV(cfg_temp,cfg.evt,lfp);
-            end
+        % if numLFP > 1
+        if numLFP == 1
+            cmap = repelem({cfg.lfpColor},numLFP); 
         else
-            lfp = cfg.lfp;
-            
-            abslfp = abs(lfp.data);
-            nans_here = abslfp > cfg.lfpMax*mean(abslfp);
-            lfp.data(nans_here) = NaN;
-            
-            lower_val = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
-            upper_val = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
-            
-            lfp.data = rescaleM(lfp.data,lower_val,upper_val);
-            h = PlotTSDfromIV(cfg_temp,cfg.evt,lfp);
+            cmap = num2cell(linspecer(numLFP),2);
+        end
+        
+        for iLFP = 1:numLFP
+            [lfp, lower_val, upper_val] = prepLFP(cfg,iLFP);
+            h.LFP(iLFP) = PlotTSDfromIV(cfg_temp,cfg.evt,lfp);
         end
         ylims = get(gca,'YLim'); ylims(1) = lower_val;
     
@@ -446,6 +383,41 @@ plotmodes = {'spikes only','ts events','iv events','ts + iv events','lfp','lfp +
 h.plotMode = plotmodes{plotMode};
 % out.plot = h;
 if exist('hS','var'); h.S = hS; end
+end
+
+function [flat_lfps, time_support] = flattenLFPs(lfps)
+% Flatten 'nested' lfps, if lfps(i) has size(lfps(i).data,1)>1 then expand
+% that into n number of tsd with size(lfp.data,1), where
+% n=size(lfps(i).data,1).
+
+ntsd = length(lfps);
+counter = 1;
+time_support = [lfps(1).tvec(1), lfps(1).tvec(end)];
+for i = 1:ntsd
+    % loop through all channels and extract data
+    ntraces = size(lfps(i).data, 1);
+    for trace = 1:ntraces
+        lfp = TSD_SelectChannel(lfps(i), trace);
+        time_support(1) = min(time_support(1), lfp.tvec(1));
+        time_support(2) = max(time_support(2), lfp.tvec(end));
+        flat_lfps(counter) = lfp; % can't really pre-allocate here, I will live with bad coding
+        counter = counter + 1;
+    end
+end
+end
+
+function [lfp, lower, upper] = prepLFP(cfg, iLFP)
+% prepare lfp data for plotting, steps include: remove extreme values,
+% rescale data between display range defined by lfp height and lfp spacing.
+lfp = cfg.lfp(iLFP);
+abslfp = abs(lfp.data);
+nans_here = abslfp > cfg.lfpMax * mean(abslfp);
+lfp.data(nans_here) = NaN;
+
+lower = (-iLFP .* cfg.lfpSpacing) - cfg.lfpHeight;
+upper = (-iLFP .* cfg.lfpSpacing) + cfg.lfpHeight;
+
+lfp.data = rescaleM(lfp.data, lower,upper);
 end
 
 function data_out = rescaleM(data_in, lower_val, upper_val)
