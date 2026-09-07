@@ -33,12 +33,14 @@ for iRipple = 1:numel(rippleCenters)
     lfp = lfp + rippleAmplitudes(iRipple) * envelope ...
         .* sin(2 * pi * rippleFrequencies(iRipple) * relativeTime);
 end
+% scale lfp to fit plotting range of ducktrap 
+lfp = 1e-4 * lfp;
+CSC.data = lfp';
+CSC.units = "V";
 
 CSC.tvec = tvec;
-CSC.data = lfp';
 CSC.label = {"synthetic LFP"};
 CSC.type = "tsd";
-CSC.units = "a.u.";
 CSC.cfg.history.mfun{1} = mfilename;
 CSC.cfg.history.cfg{1} = [];
 
