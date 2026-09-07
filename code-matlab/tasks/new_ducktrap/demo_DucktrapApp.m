@@ -39,6 +39,8 @@ CSC.data = lfp';
 CSC.label = {"synthetic LFP"};
 CSC.type = "tsd";
 CSC.units = "a.u.";
+CSC.cfg.history.mfun{1} = mfilename;
+CSC.cfg.history.cfg{1} = [];
 
 % Generate inhomogeneous Poisson-like spike trains. Each unit has a stable
 % background rate and a transient firing-rate increase around ripples.
@@ -46,6 +48,8 @@ nUnits = 5;
 S.type = "ts";
 S.t = cell(1, nUnits);
 S.label = cell(1, nUnits);
+S.cfg.history.mfun{1} = mfilename;
+S.cfg.history.cfg{1} = [];
 spikeSigma = 0.070;
 
 eventDrive = zeros(size(tvec));
