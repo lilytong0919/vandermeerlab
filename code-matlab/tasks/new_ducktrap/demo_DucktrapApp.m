@@ -73,7 +73,7 @@ cfg.evt.tend = rippleCenters + eventHalfWidth;
 
 cfg.segments.tstart = [0.5; 9.0; 17.0];
 cfg.segments.tend = [8.0; 16.0; 24.5];
-cfg.mode = "fixed";
+cfg.mode = "unfixed";
 cfg.trapwin = 2 * eventHalfWidth;
 cfg.windowSize = 2;
 cfg.EnableRobot = 0;
