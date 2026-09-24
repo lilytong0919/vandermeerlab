@@ -10,8 +10,7 @@ arguments
     session (1,1) DucktrapSession
 end
 
-windowStart = session.CurrentTime - session.WindowSize / 2;
-windowEnd = session.CurrentTime + session.WindowSize / 2;
+[windowStart, windowEnd] = session.viewLimits();
 tvec = double(session.CSC.tvec(:));
 lfp = double(session.CSC.data(:));
 sampleMask = tvec >= windowStart & tvec <= windowEnd;

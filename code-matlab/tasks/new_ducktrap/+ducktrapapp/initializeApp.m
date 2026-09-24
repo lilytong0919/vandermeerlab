@@ -13,10 +13,37 @@ arguments
 end
 
 session = DucktrapSession(cfg, S, CSC);
+recordingDuration = double(CSC.tvec(end) - CSC.tvec(1));
+minimumWindow = min([0.001, recordingDuration / 100, session.WindowSize]);
+app.WindowSizeSpinner.Limits = [minimumWindow recordingDuration];
+app.WindowSizeSpinner.Step = min(0.1, recordingDuration / 10);
 app.WindowSizeSpinner.Value = session.WindowSize;
-displayHandles = ducktrapapp.renderMainDisplay(app.MainAxes, session);
+
+nSegments = min(numel(session.Segments.tstart), numel(session.Segments.tend));
+if nSegments > 0
+    app.SegmentNumberSpinner.Limits = [1 nSegments];
+    app.SegmentNumberSpinner.Step = 1;
+    app.SegmentNumberSpinner.Value = 1;
+    app.SegmentNumberSpinner.Enable = 'on';
+    app.DestinationDropDown.Enable = 'on';
+    app.TeleportButton.Enable = 'on';
+else
+    app.SegmentNumberSpinner.Limits = [0 1];
+    app.SegmentNumberSpinner.Value = 0;
+    app.SegmentNumberSpinner.Enable = 'off';
+    app.DestinationDropDown.Enable = 'off';
+    app.TeleportButton.Enable = 'off';
+end
 
 app.UIFigure.UserData = struct( ...
     'Session', session, ...
-    'DisplayHandles', displayHandles);
+    'DisplayHandles', struct());
+
+app.WindowSizeSpinner.ValueChangedFcn = ...
+    @(~, event) ducktrapapp.changeWindowSize(app, event.Value);
+app.TeleportButton.ButtonPushedFcn = ...
+    @(~, ~) ducktrapapp.teleportToSegment(app, ...
+        app.SegmentNumberSpinner.Value, string(app.DestinationDropDown.Value));
+
+ducktrapapp.refreshMainDisplay(app);
 end
