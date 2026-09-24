@@ -1,9 +1,8 @@
 function app = demo_DucktrapApp()
-%DEMO_DUCKTRAPAPP Launch legacy ducktrap with reproducible synthetic data.
+%DEMO_DUCKTRAPAPP Launch DucktrapApp with reproducible synthetic data.
 %
 %   APP = DEMO_DUCKTRAPAPP() creates 25 seconds of synthetic LFP and spike
-%   data, including several ripple-like events, and opens the legacy
-%   ducktrap interface. APP is the legacy figure handle.
+%   data, including several ripple-like events, and opens DucktrapApp.
 %
 %   The generated inputs follow the data contract intended for DucktrapApp:
 %   CSC contains tvec, data, and label; S contains cell arrays t and label;
@@ -80,15 +79,7 @@ cfg.trapwin = 2 * eventHalfWidth;
 cfg.windowSize = 2;
 cfg.EnableRobot = 0;
 
-% Resolve repository paths relative to this file; do not change pwd.
-demoFolder = fileparts(mfilename("fullpath"));
-codeFolder = fileparts(fileparts(demoFolder));
-sharedFolder = fullfile(codeFolder, "shared");
-legacyFolder = fullfile(codeFolder, "tasks", "Alyssa_Tmaze", "beta");
-addpath(genpath(sharedFolder));
-addpath(legacyFolder);
-
-ducktrap(cfg, S, CSC);
-app = gcf;
+app = DucktrapApp();
+ducktrapapp.initializeApp(app, cfg, S, CSC);
 
 end
