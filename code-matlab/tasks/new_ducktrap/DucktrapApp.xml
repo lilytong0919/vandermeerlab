@@ -1,0 +1,263 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<MATLABApp schemaVersion='1.0.0' release='R2026b.0' minRelease='R2026b'>
+    <UIFigure name='UIFigure'>
+        <CloseRequestFcn>UIFigureCloseRequest</CloseRequestFcn>
+        <Name>'DucktrapApp'</Name>
+        <Position>[100 100 1200 720]</Position>
+        <WindowKeyPressFcn>UIFigureWindowKeyPress</WindowKeyPressFcn>
+        <Children>
+            <GridLayout name='RootGridLayout'>
+                <ColumnWidth>{'0.25x', '1x', 250}</ColumnWidth>
+                <RowHeight>{'1x'}</RowHeight>
+                <Children>
+                    <GridLayout name='PlotGridLayout'>
+                        <ColumnWidth>{'1x'}</ColumnWidth>
+                        <Layout>
+                            <Column>2</Column>
+                            <Row>1</Row>
+                        </Layout>
+                        <Padding>[0 0 0 0]</Padding>
+                        <RowHeight>{'2x', '1x'}</RowHeight>
+                        <RowSpacing>8</RowSpacing>
+                        <Children>
+                            <UIAxes name='MainAxes'>
+                                <Box>'on'</Box>
+                                <ButtonDownFcn>MainAxesButtonDown</ButtonDownFcn>
+                                <Layout>
+                                    <Column>1</Column>
+                                    <Row>1</Row>
+                                </Layout>
+                                <Title>
+                                    <String>'LFP and spike display'</String>
+                                </Title>
+                                <XLabel>
+                                    <String>'Time (s)'</String>
+                                </XLabel>
+                                <YLabel>
+                                    <String>'Signal / units'</String>
+                                </YLabel>
+                            </UIAxes>
+                            <UIAxes name='SpectrogramAxes'>
+                                <Box>'on'</Box>
+                                <Layout>
+                                    <Column>1</Column>
+                                    <Row>2</Row>
+                                </Layout>
+                                <Title>
+                                    <String>'Spectrogram'</String>
+                                </Title>
+                                <Visible>'off'</Visible>
+                                <XLabel>
+                                    <String>'Time (s)'</String>
+                                </XLabel>
+                                <YLabel>
+                                    <String>'Frequency (Hz)'</String>
+                                </YLabel>
+                            </UIAxes>
+                        </Children>
+                    </GridLayout>
+                    <Panel name='ControlPanel'>
+                        <Layout>
+                            <Column>3</Column>
+                            <Row>1</Row>
+                        </Layout>
+                        <Title>'Controls'</Title>
+                        <Children>
+                            <GridLayout name='ControlGridLayout'>
+                                <RowHeight>{5, '1x', '1x', '1x', 5, '1x', '1x', '1x', '1x', '1x', '1x', 5, '1x', '1x', '1x', '1x', 5, '1x', '1x', '1x'}</RowHeight>
+                                <RowSpacing>6</RowSpacing>
+                                <Children>
+                                    <Button name='SaveButton'>
+                                        <ButtonPushedFcn>SaveButtonPushed</ButtonPushedFcn>
+                                        <Layout>
+                                            <Column>1</Column>
+                                            <Row>[19 20]</Row>
+                                        </Layout>
+                                        <Text>'Save'</Text>
+                                    </Button>
+                                    <Button name='QuitButton'>
+                                        <ButtonPushedFcn>QuitButtonPushed</ButtonPushedFcn>
+                                        <Layout>
+                                            <Column>2</Column>
+                                            <Row>[19 20]</Row>
+                                        </Layout>
+                                        <Text>'Quit'</Text>
+                                    </Button>
+                                    <Label name='SpectrogramLabel'>
+                                        <FontWeight>'bold'</FontWeight>
+                                        <Layout>
+                                            <Column>[1 2]</Column>
+                                            <Row>6</Row>
+                                        </Layout>
+                                        <Text>'Spectrogram'</Text>
+                                    </Label>
+                                    <Button name='SpectrogramButton'>
+                                        <ButtonPushedFcn>SpectrogramButtonPushed</ButtonPushedFcn>
+                                        <Layout>
+                                            <Column>[1 2]</Column>
+                                            <Row>7</Row>
+                                        </Layout>
+                                        <Text>'Show Spectrogram'</Text>
+                                    </Button>
+                                    <Label name='MinFrequencyLabel'>
+                                        <Layout>
+                                            <Column>1</Column>
+                                            <Row>8</Row>
+                                        </Layout>
+                                        <Text>'Min. frequency (Hz)'</Text>
+                                    </Label>
+                                    <NumericEditField name='MinFrequencyEditField'>
+                                        <Layout>
+                                            <Column>1</Column>
+                                            <Row>9</Row>
+                                        </Layout>
+                                        <Value>1</Value>
+                                    </NumericEditField>
+                                    <Label name='MaxFrequencyLabel'>
+                                        <Layout>
+                                            <Column>2</Column>
+                                            <Row>8</Row>
+                                        </Layout>
+                                        <Text>'Max. frequency (Hz)'</Text>
+                                    </Label>
+                                    <NumericEditField name='MaxFrequencyEditField'>
+                                        <Layout>
+                                            <Column>2</Column>
+                                            <Row>9</Row>
+                                        </Layout>
+                                        <Value>300</Value>
+                                    </NumericEditField>
+                                    <Label name='ScaleLabel'>
+                                        <Layout>
+                                            <Column>[1 2]</Column>
+                                            <Row>10</Row>
+                                        </Layout>
+                                        <Text>'Power scale'</Text>
+                                    </Label>
+                                    <DropDown name='ScaleDropDown'>
+                                        <Items>{'root', 'decibel-watt', 'raw'}</Items>
+                                        <Layout>
+                                            <Column>2</Column>
+                                            <Row>10</Row>
+                                        </Layout>
+                                        <Value>'root'</Value>
+                                    </DropDown>
+                                    <Label name='SegmentLabel'>
+                                        <FontWeight>'bold'</FontWeight>
+                                        <Layout>
+                                            <Column>[1 2]</Column>
+                                            <Row>13</Row>
+                                        </Layout>
+                                        <Text>'Navigation'</Text>
+                                    </Label>
+                                    <DropDown name='DestinationDropDown' label='DestinationLabel'>
+                                        <Items>{'beginning', 'center', 'end'}</Items>
+                                        <Layout>
+                                            <Column>2</Column>
+                                            <Row>15</Row>
+                                        </Layout>
+                                        <Value>'beginning'</Value>
+                                        <ValueChangedFcn>DestinationDropDownValueChanged</ValueChangedFcn>
+                                    </DropDown>
+                                    <Label name='DisplayLabel'>
+                                        <FontWeight>'bold'</FontWeight>
+                                        <Layout>
+                                            <Column>[1 2]</Column>
+                                            <Row>2</Row>
+                                        </Layout>
+                                        <Text>'Display'</Text>
+                                    </Label>
+                                    <Label name='WindowSizeSpinnerLabel'>
+                                        <Layout>
+                                            <Column>1</Column>
+                                            <Row>3</Row>
+                                        </Layout>
+                                        <Text>'Window Size'</Text>
+                                    </Label>
+                                    <Spinner name='WindowSizeSpinner' label='WindowSizeSpinnerLabel'>
+                                        <Layout>
+                                            <Column>2</Column>
+                                            <Row>3</Row>
+                                        </Layout>
+                                        <ValueChangedFcn>WindowSizeSpinnerValueChanged</ValueChangedFcn>
+                                    </Spinner>
+                                    <Label name='SegmentNumberSpinnerLabel'>
+                                        <Layout>
+                                            <Column>1</Column>
+                                            <Row>14</Row>
+                                        </Layout>
+                                        <Text>'Segment Number'</Text>
+                                    </Label>
+                                    <Spinner name='SegmentNumberSpinner' label='SegmentNumberSpinnerLabel'>
+                                        <Layout>
+                                            <Column>2</Column>
+                                            <Row>14</Row>
+                                        </Layout>
+                                        <ValueChangedFcn>SegmentNumberSpinnerValueChanged</ValueChangedFcn>
+                                    </Spinner>
+                                    <Label name='DestinationLabel'>
+                                        <Layout>
+                                            <Column>1</Column>
+                                            <Row>15</Row>
+                                        </Layout>
+                                        <Text>'Destination'</Text>
+                                    </Label>
+                                    <Button name='TeleportButton'>
+                                        <ButtonPushedFcn>TeleportButtonPushed</ButtonPushedFcn>
+                                        <Layout>
+                                            <Column>[1 2]</Column>
+                                            <Row>16</Row>
+                                        </Layout>
+                                        <Text>'Teleport'</Text>
+                                    </Button>
+                                </Children>
+                            </GridLayout>
+                        </Children>
+                    </Panel>
+                    <GridLayout name='SegmentGridLayout'>
+                        <ColumnWidth>{'1x'}</ColumnWidth>
+                        <Layout>
+                            <Column>1</Column>
+                            <Row>1</Row>
+                        </Layout>
+                        <RowHeight>{'0.1x', '1x'}</RowHeight>
+                        <Children>
+                            <Table name='UITable'>
+                                <ColumnName>{'ID'; 'starts'; 'ends'}</ColumnName>
+                                <SelectionType>'row'</SelectionType>
+                                <Multiselect>'off'</Multiselect>
+                                <SelectionChangedFcn>UITableSelectionChanged</SelectionChangedFcn>
+                                <Layout>
+                                    <Column>1</Column>
+                                    <Row>2</Row>
+                                </Layout>
+                                <RowName>{}</RowName>
+                            </Table>
+                            <Label name='CountLabel'>
+                                <FontSize>18</FontSize>
+                                <FontWeight>'bold'</FontWeight>
+                                <HorizontalAlignment>'center'</HorizontalAlignment>
+                                <Layout>
+                                    <Column>1</Column>
+                                    <Row>1</Row>
+                                </Layout>
+                                <Text>'Count: 0'</Text>
+                            </Label>
+                        </Children>
+                    </GridLayout>
+                </Children>
+            </GridLayout>
+        </Children>
+    </UIFigure>
+    <RunConfiguration>
+        <StartupFcn>startupFcn</StartupFcn>
+    </RunConfiguration>
+    <AppDetails>
+        <Version>1.0</Version>
+    </AppDetails>
+    <InternalData>
+        <AppId>2148f1ad-68c4-44cd-9539-97c986561fc2</AppId>
+    </InternalData>
+    <!-- Thumbnail is used by file previewers. To change how the thumbnail is captured or stored, use the App Details dialog box in App Designer. -->
+    <Thumbnail autoCapture='true'></Thumbnail>
+</MATLABApp>

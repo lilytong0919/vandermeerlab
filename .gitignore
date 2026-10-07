@@ -29,5 +29,6 @@ codecov.exe
 *.mtc0
 *.asv
 *.xml
+!code-matlab/tasks/new_ducktrap/DucktrapApp.xml
 *.tap
 *.DS_Store

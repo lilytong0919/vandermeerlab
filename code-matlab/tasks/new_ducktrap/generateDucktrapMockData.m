@@ -67,10 +67,8 @@ for iUnit = 1:nUnits
 end
 
 eventHalfWidth = 0.060;
-cfg.evt.tstart = rippleCenters - eventHalfWidth;
-cfg.evt.tend = rippleCenters + eventHalfWidth;
-cfg.segments.tstart = [0.5; 9.0; 17.0];
-cfg.segments.tend = [8.0; 16.0; 24.5];
+cfg.evt = iv(rippleCenters - eventHalfWidth, rippleCenters + eventHalfWidth);
+cfg.segments = cfg.evt;
 cfg.mode = "unfixed";
 cfg.trapwin = 2 * eventHalfWidth;
 cfg.windowSize = 2;

@@ -13,7 +13,6 @@ classdef DucktrapSession < handle
         ConfirmedIntervals
         ResumeIntervals
         SuggestedIntervals
-        Segments
         Label
         Header
         ConfigForHistory
@@ -47,8 +46,7 @@ classdef DucktrapSession < handle
 
             obj.CSC = CSC;
             obj.Spikes = S;
-            obj.SuggestedIntervals = localField(cfg, 'evt', struct('tstart', [], 'tend', []));
-            obj.Segments = localField(cfg, 'segments', struct('tstart', [], 'tend', []));
+            obj.SuggestedIntervals = localSuggestedIntervals(cfg);
             obj.Mode = localField(cfg, 'mode', "unfixed");
             obj.TrapWindow = localField(cfg, 'trapwin', []);
             requestedWindowSize = localField(cfg, 'windowSize', 2);
@@ -58,9 +56,6 @@ classdef DucktrapSession < handle
             obj.WindowSize = min(requestedWindowSize, recordingDuration);
 
             firstSample = double(CSC.tvec(1));
-            if ~isempty(obj.Segments.tstart)
-                firstSample = max(firstSample, double(obj.Segments.tstart(1)));
-            end
             obj.CurrentTime = firstSample + obj.WindowSize / 2;
             if ~isempty(obj.SuggestedIntervals.tstart)
                 firstStart = double(obj.SuggestedIntervals.tstart(1));
@@ -85,65 +80,57 @@ classdef DucktrapSession < handle
 
             recordingDuration = double(obj.CSC.tvec(end) - obj.CSC.tvec(1));
             obj.WindowSize = min(newSize, recordingDuration);
-            obj.CurrentTime = obj.clampCenter(obj.CurrentTime);
         end
 
-        function teleportToSegment(obj, segmentNumber, destination)
+        function teleportToSuggestedSWR(obj, swrNumber)
             arguments
                 obj (1,1) DucktrapSession
-                segmentNumber (1,1) double {mustBeInteger, mustBePositive}
-                destination (1,1) string {mustBeMember(destination, ["beginning", "center", "end"])}
+                swrNumber (1,1) double {mustBeInteger, mustBePositive}
             end
 
-            nSegments = min(numel(obj.Segments.tstart), numel(obj.Segments.tend));
-            if segmentNumber > nSegments
-                error('DucktrapSession:InvalidSegment', ...
-                    'Segment number %d exceeds the %d available segments.', ...
-                    segmentNumber, nSegments);
+            nSWRs = numel(obj.SuggestedIntervals.tstart);
+            if swrNumber > nSWRs
+                error('DucktrapSession:InvalidSuggestedSWR', ...
+                    'Suggested SWR number %d exceeds the %d available events.', ...
+                    swrNumber, nSWRs);
             end
 
-            segmentStart = double(obj.Segments.tstart(segmentNumber));
-            segmentEnd = double(obj.Segments.tend(segmentNumber));
-            switch destination
-                case "beginning"
-                    targetTime = segmentStart;
-                case "center"
-                    targetTime = mean([segmentStart segmentEnd]);
-                case "end"
-                    targetTime = segmentEnd;
-            end
-            obj.CurrentTime = obj.clampCenter(targetTime);
+            swrStart = double(obj.SuggestedIntervals.tstart(swrNumber));
+            swrEnd = double(obj.SuggestedIntervals.tend(swrNumber));
+            obj.CurrentTime = mean([swrStart swrEnd]);
         end
 
         function [windowStart, windowEnd] = viewLimits(obj)
-            dataStart = double(obj.CSC.tvec(1));
-            dataEnd = double(obj.CSC.tvec(end));
-            if obj.WindowSize >= dataEnd - dataStart
-                windowStart = dataStart;
-                windowEnd = dataEnd;
-                return
-            end
-
             windowStart = obj.CurrentTime - obj.WindowSize / 2;
             windowEnd = obj.CurrentTime + obj.WindowSize / 2;
-            if windowStart < dataStart
-                windowStart = dataStart;
-                windowEnd = dataStart + obj.WindowSize;
-            elseif windowEnd > dataEnd
-                windowEnd = dataEnd;
-                windowStart = dataEnd - obj.WindowSize;
-            end
         end
     end
+end
 
-    methods (Access = private)
-        function center = clampCenter(obj, center)
-            dataStart = double(obj.CSC.tvec(1));
-            dataEnd = double(obj.CSC.tvec(end));
-            halfWindow = min(obj.WindowSize, dataEnd - dataStart) / 2;
-            center = min(max(double(center), dataStart + halfWindow), dataEnd - halfWindow);
-        end
-    end
+function intervals = localSuggestedIntervals(cfg)
+if ~isfield(cfg, 'evt') || isempty(cfg.evt)
+    intervals = iv([], []);
+    return
+end
+
+evt = cfg.evt;
+if ~isstruct(evt) || ~isfield(evt, 'tstart') || ~isfield(evt, 'tend')
+    error('DucktrapSession:InvalidSuggestedSWRs', ...
+        'cfg.evt must contain tstart and tend fields.');
+end
+
+tstart = double(evt.tstart(:));
+tend = double(evt.tend(:));
+if numel(tstart) ~= numel(tend)
+    error('DucktrapSession:InvalidSuggestedSWRs', ...
+        'cfg.evt.tstart and cfg.evt.tend must contain the same number of values.');
+end
+if any(~isfinite(tstart)) || any(~isfinite(tend)) || any(tstart > tend)
+    error('DucktrapSession:InvalidSuggestedSWRs', ...
+        'Suggested SWR times must be finite and each start must not exceed its end.');
+end
+
+intervals = iv(tstart, tend);
 end
 
 function value = localField(input, name, fallback)
