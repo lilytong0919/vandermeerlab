@@ -40,10 +40,14 @@ if isfield(intervals, 'tstart') && isfield(intervals, 'tend')
         eventStart = double(intervals.tstart(iEvent));
         eventEnd = double(intervals.tend(iEvent));
         if eventEnd >= windowStart && eventStart <= windowEnd
+            color = [1.00 0.88 0.45];
+            if session.ConfirmedMask(iEvent)
+                color = [0.25 0.75 0.40];
+            end
             handles.Intervals(end + 1) = patch(ax, ...
                 [eventStart eventEnd eventEnd eventStart], ...
                 [-1.2 -1.2 topY + 0.5 topY + 0.5], ...
-                [1.00 0.88 0.45], 'FaceAlpha', 0.22, ...
+                color, 'FaceAlpha', 0.22, ...
                 'EdgeColor', 'none', 'HitTest', 'off', ...
                 'DisplayName', 'Suggested event');
         end
@@ -73,6 +77,19 @@ else
     yticklabels(ax, "LFP");
 end
 xlim(ax, [windowStart windowEnd]);
+hold(ax, 'on');
+bounds = session.PendingInterval;
+if isempty(bounds)
+    bounds = session.FirstBoundary;
+end
+for boundary = bounds
+    xline(ax, boundary, 'Color', [0.9 0.25 0.15], 'LineWidth', 1.5, ...
+        'HitTest', 'off', 'PickableParts', 'none');
+end
+disableDefaultInteractivity(ax);
+ax.Toolbar.Visible = 'off';
+set(findall(ax, '-property', 'PickableParts'), 'PickableParts', 'none');
+ax.PickableParts = 'all';
 xlabel(ax, 'Time (s)');
 ylabel(ax, 'Signal / unit');
 title(ax, 'LFP and spike display');

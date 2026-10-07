@@ -20,6 +20,8 @@ classdef DucktrapSession < handle
         Spikes
         CurrentTime
         WindowSize
+        ConfirmedMask
+        HasUnsavedChanges = false
     end
 
     methods
@@ -47,8 +49,12 @@ classdef DucktrapSession < handle
             obj.CSC = CSC;
             obj.Spikes = S;
             obj.SuggestedIntervals = localSuggestedIntervals(cfg);
+            obj.ConfirmedMask = false(numel(obj.SuggestedIntervals.tstart), 1);
             obj.Mode = localField(cfg, 'mode', "unfixed");
-            obj.TrapWindow = localField(cfg, 'trapwin', []);
+            if ~any(strcmp(obj.Mode, {'fixed', 'unfixed'}))
+                error('DucktrapSession:InvalidMode', 'Mode must be fixed or unfixed.');
+            end
+            obj.TrapWindow = localField(cfg, 'trapwin', 0.06);
             requestedWindowSize = localField(cfg, 'windowSize', 2);
             validateattributes(requestedWindowSize, {'numeric'}, ...
                 {'scalar', 'real', 'finite', 'positive'});
@@ -67,9 +73,103 @@ classdef DucktrapSession < handle
             obj.PendingInterval = [];
             obj.ConfirmedIntervals = struct('tstart', [], 'tend', []);
             obj.ResumeIntervals = struct('tstart', [], 'tend', []);
-            obj.Label = localField(cfg, 'label', "");
-            obj.Header = struct();
+            obj.Label = localField(CSC, 'label', localField(cfg, 'label', ""));
+            obj.Header = localField(cfg, 'hdr', []);
             obj.ConfigForHistory = cfg;
+            if isfield(obj.ConfigForHistory, 'lfp')
+                obj.ConfigForHistory = rmfield(obj.ConfigForHistory, 'lfp');
+            end
+            resume = localField(cfg, 'resume', []);
+            if ~isempty(resume)
+                resumed = localSuggestedIntervals(struct('evt', resume));
+                for i = 1:numel(resumed.tstart)
+                    obj.PendingInterval = [resumed.tstart(i), resumed.tend(i)];
+                    obj.confirmPending(true);
+                end
+                obj.HasUnsavedChanges = false;
+            end
+        end
+
+        function selectBoundary(obj, time)
+            validateattributes(time, {'numeric'}, {'scalar', 'real', 'finite'});
+            if time < obj.CSC.tvec(1) || time > obj.CSC.tvec(end)
+                return
+            end
+            if strcmp(obj.Mode, 'fixed')
+                validateattributes(obj.TrapWindow, {'numeric'}, {'scalar', 'positive', 'finite'});
+                obj.PendingInterval = time + [-1 1] * obj.TrapWindow/2;
+                obj.PendingInterval = max(double(obj.CSC.tvec(1)), ...
+                    min(double(obj.CSC.tvec(end)), obj.PendingInterval));
+                obj.State = "twice";
+            elseif isempty(obj.FirstBoundary) || ~isempty(obj.PendingInterval)
+                obj.FirstBoundary = time;
+                obj.PendingInterval = [];
+                obj.State = "once";
+            elseif time ~= obj.FirstBoundary
+                obj.PendingInterval = sort([obj.FirstBoundary time]);
+                obj.State = "twice";
+            end
+        end
+
+        function cancelSelection(obj)
+            obj.FirstBoundary = [];
+            obj.PendingInterval = [];
+            obj.State = "ready";
+        end
+
+        function indices = pendingOverlaps(obj)
+            indices = [];
+            if isempty(obj.PendingInterval), return; end
+            indices = find(obj.SuggestedIntervals.tstart < obj.PendingInterval(2) & ...
+                obj.SuggestedIntervals.tend > obj.PendingInterval(1));
+        end
+
+        function index = confirmPending(obj, replaceOverlaps)
+            index = [];
+            if isempty(obj.PendingInterval), return; end
+            overlaps = obj.pendingOverlaps();
+            if ~isempty(overlaps) && ~replaceOverlaps, return; end
+            keep = true(numel(obj.ConfirmedMask), 1);
+            keep(overlaps) = false;
+            bounds = obj.PendingInterval;
+            starts = [obj.SuggestedIntervals.tstart(keep); bounds(1)];
+            ends = [obj.SuggestedIntervals.tend(keep); bounds(2)];
+            confirmed = [obj.ConfirmedMask(keep); true];
+            [starts, order] = sort(starts);
+            obj.SuggestedIntervals = iv(starts, ends(order));
+            obj.ConfirmedMask = confirmed(order);
+            index = find(order == numel(order));
+            obj.ConfirmedIntervals = iv(starts(obj.ConfirmedMask), ...
+                obj.SuggestedIntervals.tend(obj.ConfirmedMask));
+            obj.HasUnsavedChanges = true;
+            obj.cancelSelection();
+        end
+
+        function deleteEvent(obj, index)
+            validateattributes(index, {'numeric'}, {'scalar', 'integer', 'positive', ...
+                '<=', numel(obj.ConfirmedMask)});
+            obj.SuggestedIntervals.tstart(index) = [];
+            obj.SuggestedIntervals.tend(index) = [];
+            obj.ConfirmedMask(index) = [];
+            obj.ConfirmedIntervals = iv(obj.SuggestedIntervals.tstart(obj.ConfirmedMask), ...
+                obj.SuggestedIntervals.tend(obj.ConfirmedMask));
+            obj.HasUnsavedChanges = true;
+            obj.cancelSelection();
+        end
+
+        function evt = exportEvents(obj, includeSuggestions)
+            mask = obj.ConfirmedMask | includeSuggestions;
+            starts = obj.SuggestedIntervals.tstart(mask);
+            ends = obj.SuggestedIntervals.tend(mask);
+            [starts, order] = sort(starts);
+            evt = iv(starts, ends(order));
+            evt.label = obj.Label;
+            evt.hdr = obj.Header;
+            evt = History(evt, 'DucktrapApp', obj.ConfigForHistory);
+        end
+
+        function markSaved(obj)
+            obj.HasUnsavedChanges = false;
         end
 
         function changeWindowSize(obj, newSize)

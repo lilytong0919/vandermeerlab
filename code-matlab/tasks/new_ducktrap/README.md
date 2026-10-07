@@ -11,8 +11,13 @@ The app currently provides:
   `DucktrapApp.m`/`DucktrapApp.xml` pair.
 - Main and spectrogram axes.
 - Save, Quit, Spectrogram, and Teleport controls.
-- Empty callback entry points for mouse, keyboard, Save, and Spectrogram
-  interactions.
+- Two-click interval editing with vertical pending boundaries, right-click
+  cancellation, and Enter confirmation into a green shaded interval.
+- Confirmation dialogs before replacing overlapping events or deleting the
+  highlighted event with Delete/Backspace.
+- Save exports every remaining table event as `evt` in a MAT file, including
+  channel label, header, and configuration history; quitting warns about edits
+  that have not been saved.
 - A `DucktrapSession` class that owns input and view state.
 - A replaceable explicit-axes renderer for LFP, spike trains, and suggested
   interval overlays.
@@ -31,8 +36,7 @@ The app currently provides:
 - A reproducible synthetic-data demonstration entry point.
 - A MultiRaster comparison entry point using exactly the same mock dataset.
 
-Interval selection, saving, keyboard shortcuts, and spectrogram calculation
-are intentionally not implemented yet.
+Spectrogram calculation and additional keyboard navigation remain deferred.
 
 ## Preview
 
