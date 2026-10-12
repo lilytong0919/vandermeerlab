@@ -83,6 +83,9 @@ For a legacy MultiRaster navigation baseline using the same data:
 
 ## Files
 
+- `DucktrapApp-shortcuts.txt`: editable H-popup help text, reloaded whenever
+  help is opened. Keep it beside the app files.
+
 - `DucktrapApp.m`: App Designer callbacks, UI synchronization, and shared
   controller actions.
 - `DucktrapApp.xml`: App Designer component tree, grid layout, properties, and

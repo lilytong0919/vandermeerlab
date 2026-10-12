@@ -1,0 +1,28 @@
+
+BASIC NAVIGATION
+H: Help
+Wheel: Horizontal scroll
+Ctrl+wheel: Temporary horizontal zoom (no change to window size)
+R: Reset zoom to Window Size
+Space: Center to selected-event/unconfirmed-boundaries
+S: Enter boundary setting mode
+Q: Quit boundary setting mode
+
+
+VIEWING
+A: Teleport 1 event back
+D: Teleport 1 event forward
+Shift+A: Teleport 10 events back
+Shift+D: Teleport 10 events forward
+Ctrl+A: Teleport 50 events back
+Ctrl+D: Teleport 50 events forward
+
+Left click (in event boundary): Select event
+Left click (out of boundary): Unselect event
+Right click: Delete selected event
+
+
+BOUNDARY SETTING
+Left click: Set interval boundaries
+Right click: Confirm interval
+S: Clear boundaries, re-enter boundary setting
