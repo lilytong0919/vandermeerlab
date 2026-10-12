@@ -41,6 +41,11 @@ The app currently provides:
   the left table lists every suggested SWR interval.
 - Changing the segment spinner immediately centers the display on the selected
   suggested SWR.
+- Viewing-mode A/D navigate to the previous/next event relative to the window
+  center. Shift+A/D jump 10 events; Ctrl+A/D jump 50, using the nearest event as
+  the starting index. Shift takes priority if both modifiers are pressed.
+  Jumps clamp at the first/last event and preserve the displayed width. F/C/L
+  remain unassigned. H opens shortcut help in either mode.
 - The selected SWR is highlighted in the left table; selecting a table row
   teleports to that SWR and updates the segment spinner.
 - Mouse-wheel scrolling over the main axes shifts time by 20% of the window

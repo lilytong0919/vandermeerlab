@@ -9,6 +9,29 @@ classdef TestDucktrapAppEditing < matlab.uitest.TestCase
         end
     end
     methods (Test)
+        function legacyEventKeysAndHelp(test)
+            test.hover(test.App.MainAxes,[mean(test.App.MainAxes.XLim),0]);
+            width = diff(test.App.MainAxes.XLim);
+            test.App.UIFigureWindowKeyPress(struct('Key','d','Modifier',{{}}));
+            test.verifyEqual(test.App.UITable.Selection,2);
+            test.verifyEqual(test.App.SegmentNumberSpinner.Value,2);
+            test.App.UIFigureWindowKeyPress(struct('Key','d','Modifier',{{'shift'}}));
+            test.verifyEqual(test.App.UITable.Selection,6);
+            test.App.UIFigureWindowKeyPress(struct('Key','a','Modifier',{{'control'}}));
+            test.verifyEqual(test.App.UITable.Selection,1);
+            test.verifyEqual(diff(test.App.MainAxes.XLim),width,'AbsTol',1e-10);
+            test.App.UIFigureWindowKeyPress(struct('Key','h'));
+            test.dismissDialog('uialert',test.App.UIFigure);
+            test.verifyEqual(test.App.UITable.Selection,1);
+            test.App.UIFigureWindowKeyPress(struct('Key','s'));
+            before = test.App.MainAxes.XLim;
+            test.App.UIFigureWindowKeyPress(struct('Key','d','Modifier',{{'control'}}));
+            test.verifyEqual(test.App.MainAxes.XLim,before);
+            test.verifyEmpty(test.App.UITable.Selection);
+            test.App.UIFigureWindowKeyPress(struct('Key','h'));
+            test.dismissDialog('uialert',test.App.UIFigure);
+            test.verifyTrue(test.App.BoundaryModeButton.Value);
+        end
         function clicksCancelAndConfirm(test)
             test.press(test.App.BoundaryModeButton);
             limits = test.App.MainAxes.XLim;

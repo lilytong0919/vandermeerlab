@@ -139,7 +139,22 @@ classdef DucktrapApp < matlab.apps.App
             refreshMainDisplay(app);
         end
 
-        function handleViewingKey(app, key)
+        function handleViewingKey(app, key, modifiers)
+            if any(~ismember(modifiers, {'shift', 'control'})), return; end
+            if any(strcmp(key, {'a', 'd'}))
+                step = 1;
+                if ismember('shift', modifiers)
+                    step = 10;
+                elseif ismember('control', modifiers)
+                    step = 50;
+                end
+                direction = 1;
+                if strcmp(key, 'a'), direction = -1; end
+                selected = app.Session.eventNavigationTarget(direction, step);
+                if ~isempty(selected), teleportToSuggestedSWR(app, selected); end
+                return
+            end
+            if ~isempty(modifiers), return; end
             switch key
                 case 's'
                     setBoundaryMode(app, true);
@@ -149,6 +164,8 @@ classdef DucktrapApp < matlab.apps.App
                 case 'r'
                     app.Session.resetZoom();
                     refreshMainDisplay(app);
+                case 'h'
+                    showShortcutHelp(app);
             end
         end
 
@@ -165,7 +182,38 @@ classdef DucktrapApp < matlab.apps.App
                 case 'r'
                     app.Session.resetZoom();
                     refreshMainDisplay(app);
+                case 'h'
+                    showShortcutHelp(app);
             end
+        end
+
+        function showShortcutHelp(app)
+            message = strjoin({ ...
+                'VIEWING', ...
+                'A / D: previous / next event relative to the window center', ...
+                'Shift+A / Shift+D: jump 10 events from the nearest event', ...
+                'Ctrl+A / Ctrl+D: jump 50 events from the nearest event', ...
+                'Space: center selected event without changing zoom', ...
+                'S: enter boundary setting and clear event selection', ...
+                'Left click: select event; click outside events to clear', ...
+                'Right click: delete selected event after confirmation', ...
+                '', ...
+                'BOUNDARY SETTING', ...
+                'Two left clicks: set interval boundaries', ...
+                'Right click: confirm interval; overlaps require approval', ...
+                'S: clear boundaries and restart', ...
+                'Q: discard boundaries and return to viewing', ...
+                'Space: center one boundary or midpoint of two', ...
+                '', ...
+                'BOTH MODES', ...
+                'Wheel: move through time', ...
+                'Ctrl+wheel: temporary zoom (up in, down out)', ...
+                'R: reset zoom to Window Size at the current center', ...
+                'H: keyboard shortcut help', ...
+                '', ...
+                'Event jumps stop at the first/last event. Shift takes priority', ...
+                'over Ctrl. Shortcuts are inactive while editing text or numbers.'}, newline);
+            uialert(app.UIFigure, message, 'Keyboard Shortcuts', 'Icon', 'info');
         end
 
         function teleportToSuggestedSWR(app, swrNumber)
@@ -327,15 +375,16 @@ classdef DucktrapApp < matlab.apps.App
                     isa(target, 'matlab.ui.control.TextArea')
                 return
             end
-            if (isprop(event, 'Modifier') || ...
-                    (isstruct(event) && isfield(event, 'Modifier'))) && ...
-                    ~isempty(event.Modifier)
-                return
+            modifiers = {};
+            if isprop(event, 'Modifier') || ...
+                    (isstruct(event) && isfield(event, 'Modifier'))
+                modifiers = event.Modifier;
             end
             if app.Session.BoundaryMode
+                if ~isempty(modifiers), return; end
                 handleBoundaryKey(app, event.Key);
             else
-                handleViewingKey(app, event.Key);
+                handleViewingKey(app, event.Key, modifiers);
             end
         end
 

@@ -253,6 +253,34 @@ classdef DucktrapSession < handle
                 min(double(obj.CSC.tvec(end)) - halfWidth, ...
                 obj.CurrentTime + count * obj.DisplayWindowSize * 0.2));
         end
+
+        function index = eventNavigationTarget(obj, direction, step)
+            arguments
+                obj (1,1) DucktrapSession
+                direction (1,1) double {mustBeMember(direction, [-1 1])}
+                step (1,1) double {mustBeInteger, mustBePositive}
+            end
+            index = [];
+            centers = (obj.SuggestedIntervals.tstart + obj.SuggestedIntervals.tend)/2;
+            count = numel(centers);
+            if obj.BoundaryMode || count == 0, return; end
+            distances = abs(centers - obj.CurrentTime);
+            % Legacy nearest_idx3 chooses the later event on midpoint ties.
+            nearest = find(distances == min(distances), 1, 'last');
+            % Plain A/D from between events chooses the event on that side.
+            % Modified jumps use the nearest event, as in legacy navigate.m.
+            if step == 1 && ~any(centers == obj.CurrentTime)
+                candidates = find(direction * (centers - obj.CurrentTime) > 0);
+                if isempty(candidates)
+                    if direction < 0, index = 1; else, index = count; end
+                else
+                    [~, closest] = min(abs(centers(candidates) - obj.CurrentTime));
+                    index = candidates(closest);
+                end
+            else
+                index = max(1, min(count, nearest + direction * step));
+            end
+        end
     end
 end
 
