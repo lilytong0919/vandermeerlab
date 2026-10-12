@@ -5,6 +5,8 @@
         <Name>'DucktrapApp'</Name>
         <Position>[100 100 1200 720]</Position>
         <WindowKeyPressFcn>UIFigureWindowKeyPress</WindowKeyPressFcn>
+        <WindowButtonMotionFcn>UIFigureWindowButtonMotion</WindowButtonMotionFcn>
+        <WindowScrollWheelFcn>UIFigureWindowScrollWheel</WindowScrollWheelFcn>
         <Children>
             <GridLayout name='RootGridLayout'>
                 <ColumnWidth>{'0.25x', '1x', 250}</ColumnWidth>
@@ -75,13 +77,19 @@
                                         </Layout>
                                         <Text>'Save'</Text>
                                     </Button>
+                                    <StateButton name='BoundaryModeButton'>
+                                        <ValueChangedFcn>BoundaryModeButtonValueChanged</ValueChangedFcn>
+                                        <Layout><Column>[1 2]</Column><Row>4</Row></Layout>
+                                        <Text>'Set Boundaries'</Text>
+                                        <Tooltip>'Set boundaries: S enters/restarts, right click confirms, Q exits'</Tooltip>
+                                    </StateButton>
                                     <Button name='QuitButton'>
                                         <ButtonPushedFcn>QuitButtonPushed</ButtonPushedFcn>
                                         <Layout>
                                             <Column>2</Column>
                                             <Row>[19 20]</Row>
                                         </Layout>
-                                        <Text>'Quit'</Text>
+                                        <Text>'Save &amp; Quit'</Text>
                                     </Button>
                                     <Label name='SpectrogramLabel'>
                                         <FontWeight>'bold'</FontWeight>

@@ -36,11 +36,13 @@ classdef DucktrapApp < matlab.apps.App
         PlotGridLayout                  matlab.ui.container.GridLayout
         SpectrogramAxes                 matlab.ui.control.UIAxes
         MainAxes                        matlab.ui.control.UIAxes
+        BoundaryModeButton              matlab.ui.control.StateButton
     end
 
     properties (Access = private)
         DisplayHandles = struct()
         Session
+        HoverLine = gobjects(0)
     end
 
     methods (Access = private)
@@ -64,7 +66,6 @@ classdef DucktrapApp < matlab.apps.App
                 double(intervals.tstart(:)), double(intervals.tend(:))];
             app.CountLabel.Text = sprintf('Count: %d', nSWRs);
             app.DestinationDropDown.Value = 'center';
-            app.DestinationDropDown.Enable = 'off';
         
             if nSWRs > 0
                 app.UITable.Selection = 1;
@@ -75,14 +76,10 @@ classdef DucktrapApp < matlab.apps.App
                 drawnow;
                 app.SegmentNumberSpinner.Limits = [1 nSWRs];
                 app.SegmentNumberSpinner.Step = 1;
-                app.SegmentNumberSpinner.Enable = 'on';
-                app.TeleportButton.Enable = 'on';
             else
                 app.SegmentNumberSpinner.Limits = [0 1];
                 app.UITable.Selection = [];
                 app.SegmentNumberSpinner.Value = 0;
-                app.SegmentNumberSpinner.Enable = 'off';
-                app.TeleportButton.Enable = 'off';
             end
         end
 
@@ -97,16 +94,95 @@ classdef DucktrapApp < matlab.apps.App
                 error('DucktrapApp:NotInitialized', ...
                     'DucktrapApp must be initialized before refreshing the display.');
             end
-            app.DisplayHandles = ducktrapapp.renderMainDisplay(app.MainAxes, app.Session);
+            synchronizeInteractionState(app);
+            app.DisplayHandles = ducktrapapp.renderMainDisplay(app.MainAxes, ...
+                app.Session, app.UITable.Selection);
+            if ~app.Session.BoundaryMode
+                state = 'Viewing';
+            elseif ~isempty(app.Session.PendingInterval)
+                state = 'Set Boundaries: Ready to Confirm';
+            elseif ~isempty(app.Session.FirstBoundary)
+                state = 'Set Boundaries: Select End';
+            else
+                state = 'Set Boundaries: Select Start';
+            end
+            title(app.MainAxes, state);
+        end
+
+        function synchronizeInteractionState(app)
+            % All mode-dependent control availability belongs here.
+            viewing = ~app.Session.BoundaryMode;
+            viewingEnable = 'off';
+            if viewing, viewingEnable = 'on'; end
+            viewingControls = {app.UITable, app.SaveButton, app.QuitButton, ...
+                app.SpectrogramButton, app.MinFrequencyEditField, ...
+                app.MaxFrequencyEditField, app.ScaleDropDown};
+            for i = 1:numel(viewingControls)
+                viewingControls{i}.Enable = viewingEnable;
+            end
+            hasEvents = ~isempty(app.Session.SuggestedIntervals.tstart);
+            eventEnable = 'off';
+            if viewing && hasEvents, eventEnable = 'on'; end
+            eventControls = {app.SegmentNumberSpinner, app.TeleportButton};
+            for i = 1:numel(eventControls)
+                eventControls{i}.Enable = eventEnable;
+            end
+            app.DestinationDropDown.Enable = 'off';
+            app.WindowSizeSpinner.Enable = 'on';
+            app.BoundaryModeButton.Enable = 'on';
+            app.BoundaryModeButton.Value = app.Session.BoundaryMode;
+        end
+
+        function setBoundaryMode(app, enabled)
+            app.Session.setBoundaryMode(enabled);
+            if enabled, synchronizeViewingSelection(app, []); end
+            refreshMainDisplay(app);
+        end
+
+        function handleViewingKey(app, key)
+            switch key
+                case 's'
+                    setBoundaryMode(app, true);
+                case 'space'
+                    selected = app.UITable.Selection;
+                    if ~isempty(selected), teleportToSuggestedSWR(app, selected); end
+                case 'r'
+                    app.Session.resetZoom();
+                    refreshMainDisplay(app);
+            end
+        end
+
+        function handleBoundaryKey(app, key)
+            switch key
+                case 's'
+                    app.Session.cancelSelection();
+                    refreshMainDisplay(app);
+                case 'q'
+                    setBoundaryMode(app, false);
+                case 'space'
+                    app.Session.centerBoundaries();
+                    refreshMainDisplay(app);
+                case 'r'
+                    app.Session.resetZoom();
+                    refreshMainDisplay(app);
+            end
         end
 
         function teleportToSuggestedSWR(app, swrNumber)
+            if app.Session.BoundaryMode, return; end
             app.Session.cancelSelection();
             app.Session.teleportToSuggestedSWR(swrNumber);
-            app.SegmentNumberSpinner.Value = swrNumber;
-            app.UITable.Selection = swrNumber;
-            scroll(app.UITable, 'row', swrNumber);
+            synchronizeViewingSelection(app, swrNumber);
             refreshMainDisplay(app);
+        end
+
+        function synchronizeViewingSelection(app, selected)
+            if app.Session.BoundaryMode && ~isempty(selected), return; end
+            app.UITable.Selection = selected;
+            if ~isempty(selected)
+                app.SegmentNumberSpinner.Value = selected;
+                scroll(app.UITable, 'row', selected);
+            end
         end
 
         function synchronizeEvents(app, selected)
@@ -120,7 +196,7 @@ classdef DucktrapApp < matlab.apps.App
         end
 
         function confirmInterval(app)
-            if isempty(app.Session.PendingInterval), return; end
+            if ~app.Session.BoundaryMode || isempty(app.Session.PendingInterval), return; end
             overlaps = app.Session.pendingOverlaps();
             if ~isempty(overlaps)
                 choice = uiconfirm(app.UIFigure, sprintf( ...
@@ -134,8 +210,9 @@ classdef DucktrapApp < matlab.apps.App
         end
 
         function deleteViewedEvent(app)
-            selected = app.SegmentNumberSpinner.Value;
-            if selected < 1, return; end
+            if app.Session.BoundaryMode, return; end
+            selected = app.UITable.Selection;
+            if isempty(selected), return; end
             intervals = app.Session.SuggestedIntervals;
             choice = uiconfirm(app.UIFigure, sprintf( ...
                 'Delete event %d (%.6g to %.6g s)?', selected, ...
@@ -157,10 +234,79 @@ classdef DucktrapApp < matlab.apps.App
             delete(app);
         end
 
+        function saved = saveEvents(app)
+            saved = false;
+            if app.Session.BoundaryMode, return; end
+            [~, folderName] = fileparts(pwd);
+            [filename, folder] = uiputfile('*.mat', 'Save Events', ...
+                [folderName '-manualIV.mat']);
+            focus(app.UIFigure);
+            if isequal(filename, 0), return; end
+            try
+                evt = app.Session.exportEvents(true);
+                save(fullfile(folder, filename), 'evt');
+                app.Session.markSaved();
+                saved = true;
+            catch err
+                uialert(app.UIFigure, err.message, 'Save Failed');
+            end
+        end
+
     end
 
     % Callbacks that handle component events
     methods
+
+        function UIFigureWindowButtonMotion(app, event)
+            if isempty(app.Session), return; end
+            point = app.MainAxes.CurrentPoint;
+            cursor = app.UIFigure.CurrentPoint;
+            bounds = getpixelposition(app.MainAxes, true);
+            inAxes = cursor(1) >= bounds(1) && cursor(1) <= bounds(1)+bounds(3) && ...
+                cursor(2) >= bounds(2) && cursor(2) <= bounds(2)+bounds(4) && ...
+                point(1,1) >= app.MainAxes.XLim(1) && point(1,1) <= app.MainAxes.XLim(2) && ...
+                point(1,2) >= app.MainAxes.YLim(1) && point(1,2) <= app.MainAxes.YLim(2);
+            if ~app.Session.BoundaryMode || ~inAxes
+                if isgraphics(app.HoverLine), app.HoverLine.Visible = 'off'; end
+                return
+            end
+            x = point(1,1);
+            width = diff(app.MainAxes.XLim)/max(1, bounds(3));
+            y = app.MainAxes.YLim;
+            if isempty(app.HoverLine) || ~isgraphics(app.HoverLine)
+                hold(app.MainAxes, 'on');
+                app.HoverLine = patch(app.MainAxes, [x x+width x+width x], ...
+                    [y(1) y(1) y(2) y(2)], [0.9 0.25 0.15], ...
+                    'FaceAlpha', 0.25, 'EdgeColor', 'none', ...
+                    'HitTest', 'off', 'PickableParts', 'none');
+                hold(app.MainAxes, 'off');
+            else
+                app.HoverLine.XData = [x x+width x+width x];
+                app.HoverLine.YData = [y(1) y(1) y(2) y(2)];
+                app.HoverLine.Visible = 'on';
+            end
+        end
+
+        function BoundaryModeButtonValueChanged(app, event)
+            setBoundaryMode(app, app.BoundaryModeButton.Value);
+            focus(app.UIFigure);
+        end
+
+        function UIFigureWindowScrollWheel(app, event)
+            if isempty(app.Session) || event.VerticalScrollCount == 0, return; end
+            point = app.UIFigure.CurrentPoint;
+            bounds = getpixelposition(app.MainAxes, true);
+            if point(1) < bounds(1) || point(1) > bounds(1)+bounds(3) || ...
+                    point(2) < bounds(2) || point(2) > bounds(2)+bounds(4)
+                return
+            end
+            if ismember('control', app.UIFigure.CurrentModifier)
+                app.Session.zoomTime(event.VerticalScrollCount);
+            else
+                app.Session.scrollTime(event.VerticalScrollCount);
+            end
+            refreshMainDisplay(app);
+        end
 
         % Code that executes after component creation
         function startupFcn(app, cfg, S, CSC)
@@ -174,11 +320,22 @@ classdef DucktrapApp < matlab.apps.App
 
         % Window key press function: UIFigure
         function UIFigureWindowKeyPress(app, event)
-            switch event.Key
-                case {'return', 'enter'}
-                    confirmInterval(app);
-                case {'delete', 'backspace'}
-                    deleteViewedEvent(app);
+            target = app.UIFigure.CurrentObject;
+            if isa(target, 'matlab.ui.control.EditField') || ...
+                    isa(target, 'matlab.ui.control.NumericEditField') || ...
+                    isa(target, 'matlab.ui.control.Spinner') || ...
+                    isa(target, 'matlab.ui.control.TextArea')
+                return
+            end
+            if (isprop(event, 'Modifier') || ...
+                    (isstruct(event) && isfield(event, 'Modifier'))) && ...
+                    ~isempty(event.Modifier)
+                return
+            end
+            if app.Session.BoundaryMode
+                handleBoundaryKey(app, event.Key);
+            else
+                handleViewingKey(app, event.Key);
             end
         end
 
@@ -191,9 +348,19 @@ classdef DucktrapApp < matlab.apps.App
             end
             switch app.UIFigure.SelectionType
                 case 'normal'
-                    app.Session.selectBoundary(point(1,1));
+                    if app.Session.BoundaryMode
+                        app.Session.selectBoundary(point(1,1));
+                    else
+                        selected = app.Session.eventAtTime(point(1,1));
+                        synchronizeViewingSelection(app, selected);
+                    end
                 case 'alt'
-                    app.Session.cancelSelection();
+                    if app.Session.BoundaryMode
+                        confirmInterval(app);
+                    else
+                        deleteViewedEvent(app);
+                    end
+                    return
                 otherwise
                     return
             end
@@ -202,22 +369,14 @@ classdef DucktrapApp < matlab.apps.App
 
         % Button pushed function: SaveButton
         function SaveButtonPushed(app, event)
-            [~, folderName] = fileparts(pwd);
-            [filename, folder] = uiputfile('*.mat', 'Save Events', ...
-                [folderName '-manualIV.mat']);
-            if isequal(filename, 0), return; end
-            evt = app.Session.exportEvents(true);
-            try
-                save(fullfile(folder, filename), 'evt');
-                app.Session.markSaved();
-            catch err
-                uialert(app.UIFigure, err.message, 'Save Failed');
-            end
+            saveEvents(app);
         end
 
         % Button pushed function: QuitButton
         function QuitButtonPushed(app, event)
-            requestClose(app);
+            if saveEvents(app)
+                delete(app);
+            end
         end
 
         % Button pushed function: SpectrogramButton
@@ -227,7 +386,7 @@ classdef DucktrapApp < matlab.apps.App
 
         % Value changed function: DestinationDropDown
         function DestinationDropDownValueChanged(app, event)
-            value = app.DestinationDropDown.Value;
+            % TODO: Support destinations other than the event center.
         end
 
         % Value changed function: WindowSizeSpinner
@@ -237,20 +396,25 @@ classdef DucktrapApp < matlab.apps.App
 
         % Value changed function: SegmentNumberSpinner
         function SegmentNumberSpinnerValueChanged(app, event)
+            if app.Session.BoundaryMode, return; end
             teleportToSuggestedSWR(app, event.Value);
         end
 
         % Button pushed function: TeleportButton
         function TeleportButtonPushed(app, event)
+            if app.Session.BoundaryMode, return; end
             teleportToSuggestedSWR(app, app.SegmentNumberSpinner.Value);
         end
 
         % Selection changed function: UITable
         function UITableSelectionChanged(app, event)
+            if app.Session.BoundaryMode
+                app.UITable.Selection = [];
+                return
+            end
             if isempty(event.Selection)
-                if app.SegmentNumberSpinner.Value > 0
-                    app.UITable.Selection = app.SegmentNumberSpinner.Value;
-                end
+                synchronizeViewingSelection(app, []);
+                refreshMainDisplay(app);
                 return
             end
             teleportToSuggestedSWR(app, event.Selection(1));

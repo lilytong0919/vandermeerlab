@@ -20,8 +20,10 @@ classdef DucktrapSession < handle
         Spikes
         CurrentTime
         WindowSize
+        DisplayWindowSize
         ConfirmedMask
         HasUnsavedChanges = false
+        BoundaryMode = false
     end
 
     methods
@@ -60,6 +62,7 @@ classdef DucktrapSession < handle
                 {'scalar', 'real', 'finite', 'positive'});
             recordingDuration = double(CSC.tvec(end) - CSC.tvec(1));
             obj.WindowSize = min(requestedWindowSize, recordingDuration);
+            obj.DisplayWindowSize = obj.WindowSize;
 
             firstSample = double(CSC.tvec(1));
             obj.CurrentTime = firstSample + obj.WindowSize / 2;
@@ -117,6 +120,21 @@ classdef DucktrapSession < handle
             obj.State = "ready";
         end
 
+        function setBoundaryMode(obj, enabled)
+            obj.cancelSelection();
+            obj.BoundaryMode = logical(enabled);
+        end
+
+        function selected = eventAtTime(obj, time)
+            intervals = obj.SuggestedIntervals;
+            candidates = find(intervals.tstart <= time & intervals.tend >= time);
+            selected = [];
+            if isempty(candidates), return; end
+            centers = (intervals.tstart(candidates) + intervals.tend(candidates))/2;
+            [~, index] = min(abs(centers-time));
+            selected = candidates(index);
+        end
+
         function indices = pendingOverlaps(obj)
             indices = [];
             if isempty(obj.PendingInterval), return; end
@@ -143,6 +161,7 @@ classdef DucktrapSession < handle
                 obj.SuggestedIntervals.tend(obj.ConfirmedMask));
             obj.HasUnsavedChanges = true;
             obj.cancelSelection();
+            obj.BoundaryMode = false;
         end
 
         function deleteEvent(obj, index)
@@ -180,6 +199,7 @@ classdef DucktrapSession < handle
 
             recordingDuration = double(obj.CSC.tvec(end) - obj.CSC.tvec(1));
             obj.WindowSize = min(newSize, recordingDuration);
+            obj.DisplayWindowSize = obj.WindowSize;
         end
 
         function teleportToSuggestedSWR(obj, swrNumber)
@@ -201,8 +221,37 @@ classdef DucktrapSession < handle
         end
 
         function [windowStart, windowEnd] = viewLimits(obj)
-            windowStart = obj.CurrentTime - obj.WindowSize / 2;
-            windowEnd = obj.CurrentTime + obj.WindowSize / 2;
+            windowStart = obj.CurrentTime - obj.DisplayWindowSize / 2;
+            windowEnd = obj.CurrentTime + obj.DisplayWindowSize / 2;
+        end
+
+        function zoomTime(obj, count)
+            validateattributes(count, {'numeric'}, {'scalar', 'real', 'finite'});
+            duration = double(obj.CSC.tvec(end)-obj.CSC.tvec(1));
+            minimum = min([0.001, duration/100, obj.WindowSize]);
+            obj.DisplayWindowSize = max(minimum, min(duration, ...
+                obj.DisplayWindowSize * 1.25^max(-100, min(100, count))));
+        end
+
+        function resetZoom(obj)
+            obj.DisplayWindowSize = obj.WindowSize;
+        end
+
+        function centerBoundaries(obj)
+            if ~isempty(obj.PendingInterval)
+                obj.CurrentTime = mean(obj.PendingInterval);
+            elseif ~isempty(obj.FirstBoundary)
+                obj.CurrentTime = obj.FirstBoundary;
+            end
+        end
+
+        function scrollTime(obj, count)
+            validateattributes(count, {'numeric'}, {'scalar', 'real', 'finite'});
+            if ~obj.BoundaryMode, obj.cancelSelection(); end
+            halfWidth = obj.DisplayWindowSize / 2;
+            obj.CurrentTime = max(double(obj.CSC.tvec(1)) + halfWidth, ...
+                min(double(obj.CSC.tvec(end)) - halfWidth, ...
+                obj.CurrentTime + count * obj.DisplayWindowSize * 0.2));
         end
     end
 end

@@ -10,11 +10,25 @@ The app currently provides:
 - An R2026b App Designer app stored as the plain-text
   `DucktrapApp.m`/`DucktrapApp.xml` pair.
 - Main and spectrogram axes.
-- Save, Quit, Spectrogram, and Teleport controls.
-- Two-click interval editing with vertical pending boundaries, right-click
-  cancellation, and Enter confirmation into a green shaded interval.
-- Confirmation dialogs before replacing overlapping events or deleting the
-  highlighted event with Delete/Backspace.
+- Save, Save & Quit, Spectrogram, and Teleport controls. Save & Quit closes only
+  after a successful save; canceling or failing to save leaves the app open.
+- Explicit boundary mode entered with Set Boundaries or unmodified S.
+  A faint cursor line and main plot title show the state. Two left clicks set
+  boundaries; right click confirms the interval and returns to viewing mode.
+  S clears pending boundaries and restarts setting; Q exits without confirming.
+  The toggle button can also exit. Overlap
+  cancellation keeps the pending boundaries. S is ignored in editable controls.
+- Boundary entry clears event selection. Event table/spinner/Teleport, Save,
+  Save & Quit, and spectrogram controls are disabled until exit; window sizing
+  stays available. Mode-dependent availability is centralized in
+  `synchronizeInteractionState`, and keyboard dispatch is separate for each mode.
+- In viewing mode, left click inside an event selects it without teleporting;
+  left click outside events clears selection. Right click deletes the selected
+  event after confirmation. Selected events
+  are shaded green and all other events yellow, regardless of confirmation.
+  Delete/Backspace is disabled in boundary mode.
+- Confirmation dialogs before replacing overlapping events or right-click
+  deletion. Enter, Delete, and Backspace have no interval action.
 - Save exports every remaining table event as `evt` in a MAT file, including
   channel label, header, and configuration history; quitting warns about edits
   that have not been saved.
@@ -29,8 +43,18 @@ The app currently provides:
   suggested SWR.
 - The selected SWR is highlighted in the left table; selecting a table row
   teleports to that SWR and updates the segment spinner.
-- Teleport centers the display on the selected SWR while preserving the
-  exact window width selected by `WindowSizeSpinner`.
+- Mouse-wheel scrolling over the main axes shifts time by 20% of the window
+  width (down: later, up: earlier), bounded by the recording. Selection persists
+  even off-screen; Teleport returns to the spinner's selected event. Scrolling
+  preserves pending boundaries and boundary mode when active.
+- Ctrl+scroll temporarily zooms the time axis (up: in, down: out) without changing
+  the Window Size setting. Ordinary scrolling uses the currently displayed span.
+  R restores Window Size around the current center. Space centers the selected
+  event in viewing mode without changing zoom. In boundary mode, Space centers
+  one pending boundary or the midpoint of two; with none it does nothing.
+  Pan, zoom, reset, and boundary centering preserve pending bounds and event data.
+- Teleport centers the display on the selected SWR while preserving the current
+  displayed width; R independently resets temporary zoom.
 - A separate `DucktrapSession` model so app callbacks and future keyboard
   shortcuts can share state transitions without duplicating them.
 - A reproducible synthetic-data demonstration entry point.

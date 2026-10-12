@@ -1,4 +1,4 @@
-function handles = renderMainDisplay(ax, session)
+function handles = renderMainDisplay(ax, session, selectedEvent)
 %RENDERMAINDISPLAY Render the current Ducktrap view into an explicit UIAxes.
 %
 % This first renderer intentionally favors a small, replaceable interface
@@ -8,6 +8,7 @@ function handles = renderMainDisplay(ax, session)
 arguments
     ax (1,1) matlab.ui.control.UIAxes
     session (1,1) DucktrapSession
+    selectedEvent = []
 end
 
 [windowStart, windowEnd] = session.viewLimits();
@@ -41,7 +42,7 @@ if isfield(intervals, 'tstart') && isfield(intervals, 'tend')
         eventEnd = double(intervals.tend(iEvent));
         if eventEnd >= windowStart && eventStart <= windowEnd
             color = [1.00 0.88 0.45];
-            if session.ConfirmedMask(iEvent)
+            if ismember(iEvent, selectedEvent)
                 color = [0.25 0.75 0.40];
             end
             handles.Intervals(end + 1) = patch(ax, ...
@@ -92,7 +93,6 @@ set(findall(ax, '-property', 'PickableParts'), 'PickableParts', 'none');
 ax.PickableParts = 'all';
 xlabel(ax, 'Time (s)');
 ylabel(ax, 'Signal / unit');
-title(ax, 'LFP and spike display');
 box(ax, 'on');
 hold(ax, 'off');
 
